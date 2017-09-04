@@ -1,1 +1,16 @@
-dfgdfg
+Settings:
+    Transition time
+    Transition mode
+    Folder location(s)
+
+Features:
+    Run Slideshow
+    Interrupt Slideshow
+    Randomize Slideshow
+    Show Tags on Slides:
+        Date
+        Location when available
+        Folder name
+    Load Settings
+    Store Settings
+    Default Settings
