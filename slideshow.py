@@ -5,7 +5,7 @@ import time
 image_paths = ["img1.jpg", "img2.jpg", "img3.jpg", "img4.jpg"]
 
 class Imagewindow(tk.Tk):
-    def __init__(self, delay, transition):
+    def __init__(self, delay, transition, alpha_step):
         tk.Tk.__init__(self)
 
         self.transition = transition
@@ -15,7 +15,8 @@ class Imagewindow(tk.Tk):
         self.label = tk.Label(self, bd=0)
         self.label.pack()
 
-        self.alpha = 0
+        self.fade_these_images = None
+        self.alpha_step = alpha_step
         self.current_image = None
         self.next_image = self.resize_image(next(self.images))
 
@@ -23,27 +24,33 @@ class Imagewindow(tk.Tk):
         try:
             image_path = next(self.images)
         except StopIteration:
-            return False
-
+            return
         self.current_image = self.next_image
         self.next_image = self.resize_image(image_path)
 
-        #blending images
+        #show image
         self.label.image = ImageTk.PhotoImage(self.current_image)
         self.label.config(image=self.label.image)
+        #create blended images for fading
+        self.fade_these_images = iter(self.create_fade_images(self.current_image, self.next_image, self.alpha_step))
 
         self.after(self.delay*1000, self.fade_images)
 
     def fade_images(self):
-        if self.alpha < 1.0:
-            tmp_img = Image.blend(self.current_image, self.next_image, self.alpha)
-            self.label.image = ImageTk.PhotoImage(tmp_img)
-            self.label.config(image=self.label.image)
-            self.alpha = self.alpha + 0.05
-            self.after(200, self.fade_images)
-        else:
-            self.alpha = 0
+        try:
+            self.label.config(image=next(self.fade_these_images))
+            self.after(1, self.fade_images)
+        except StopIteration:
             self.slideShow()
+
+    def create_fade_images(self, current_image, next_image, alpha_step):
+        fade_these_images = []
+        alpha = 0
+        while 1.0 >= alpha:
+            tmp_img = Image.blend(current_image, next_image, alpha)
+            fade_these_images.append(ImageTk.PhotoImage(tmp_img))
+            alpha = alpha + alpha_step
+        return fade_these_images
 
     def resize_image(self, image_path):
         img_temp = Image.open(image_path)
@@ -62,8 +69,9 @@ class Imagewindow(tk.Tk):
 def main():
     delay = 2
     transition = True
+    alpha_step = 0.03
 
-    root = Imagewindow(delay, transition)
+    root = Imagewindow(delay, transition, alpha_step)
     root.overrideredirect(True)
     root.geometry('%dx%d+0+0' % (root.screen_ratio))
     root.configure(background="black")
